@@ -157,6 +157,8 @@ def main():
                       help="sets the logging level (DEBUG, INFO, WARNING)")
   parser.add_argument("--output-log", action="store", dest="log_path", type=str,
                       help="sets the output log path. (std out by default)")
+  parser.add_argument('--verifier', choices=['boogie', 'corral'],
+                      help='back-end verification engine')
   args = parser.parse_args()
 
   if args.exhaustive:
@@ -211,14 +213,15 @@ def main():
         cmd += ['--mem-mod=' + memory]
 
         for verifier in meta['verifiers'][:100 if args.all_configs else 1]:
-          name = path.splitext(path.basename(test))[0]
-          cmd += ['--verifier=' + verifier]
-          cmd += ['-bc', "%s-%s-%s.bc" % (name, memory, verifier)]
-          cmd += ['-bpl', "%s-%s-%s.bpl" % (name, memory, verifier)]
-          r = p.apply_async(process_test,
-                args=(cmd[:], test, memory, verifier, meta['expect'], args.log_path,),
-                callback=tally_result)
-          results.append(r)
+          if verifier == args.verifier:
+            name = path.splitext(path.basename(test))[0]
+            cmd += ['--verifier=' + verifier]
+            cmd += ['-bc', "%s-%s-%s.bc" % (name, memory, verifier)]
+            cmd += ['-bpl', "%s-%s-%s.bpl" % (name, memory, verifier)]
+            r = p.apply_async(process_test,
+                  args=(cmd[:], test, memory, verifier, meta['expect'], args.log_path,),
+                  callback=tally_result)
+            results.append(r)
 
     # keep the main thread active while there are active workers
     for r in results:

@@ -403,7 +403,7 @@ then
   puts "Running SMACK regression tests"
 
   cd ${SMACK_DIR}/test
-  ./regtest.py
+  ./regtest.py --exhaustive --verifier=boogie
   res=$?
 
   puts "Regression tests complete"
